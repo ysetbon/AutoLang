@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoLang</title>
+  <style>
+    body {
+      width: 320px;
+      padding: 0;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      direction: ltr;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .header p {
+      margin: 5px 0 0 0;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .content {
+      padding: 20px;
+    }
+    
+    .status {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .status-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .language-hebrew {
+      color: #0066cc;
+    }
+    
+    .language-english {
+      color: #00aa00;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-hebrew {
+      background: #0066cc;
+      color: white;
+    }
+    
+    .btn-hebrew:hover {
+      background: #0052a3;
+    }
+    
+    .btn-english {
+      background: #00aa00;
+      color: white;
+    }
+    
+    .btn-english:hover {
+      background: #008800;
+    }
+    
+    .info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+    }
+    
+    .info-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #1976d2;
+    }
+    
+    .tips {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+    }
+    
+    .tips ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    
+    .tips li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔤 AutoLang</h1>
+    <p>Hebrew/English Tab Memory</p>
+  </div>
+  
+  <div class="content">
+    <div class="status">
+      <div class="status-label">Current Field Language</div>
+      <div class="status-value" id="currentLanguage">Detecting...</div>
+      <div style="font-size: 11px; color: #888; margin-top: 8px;" id="fieldInfo">
+        Each text field remembers its own language
+      </div>
+    </div>
+    
+    <div class="buttons">
+      <button class="btn btn-hebrew" id="btnHebrew">עברית</button>
+      <button class="btn btn-english" id="btnEnglish">English</button>
+    </div>
+    
+    <div class="info">
+      <div class="info-title">💡 How it works</div>
+      <div>
+        AutoLang remembers which language you use in <strong>each specific text field</strong>. 
+        When you click into a field you've used before, it shows a reminder of the language 
+        you last used there!
+      </div>
+    </div>
+    
+    <div class="tips">
+      <strong>Smart Field Memory:</strong>
+      <ul>
+        <li>Gmail "To:" field in English? Remembered! ✓</li>
+        <li>Same email "Subject:" in Hebrew? Also remembered! ✓</li>
+        <li>Each field learns from your typing</li>
+        <li>Works across all websites</li>
+        <li>Click buttons above to manually override</li>
+      </ul>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

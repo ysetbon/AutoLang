@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tasklist)",
+      "Bash(findstr:*)",
+      "Read(//c/Users/YonatanSetbon/Downloads/**)",
+      "Bash(dir:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
