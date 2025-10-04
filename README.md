@@ -38,19 +38,21 @@ flowchart TD
 
     Found -->|No| Poll
 
-    style Start fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
-    style Done fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
-    style Detect fill:#bbdefb,stroke:#1976d2,stroke-width:2px,color:#000
-    style Store fill:#bbdefb,stroke:#1976d2,stroke-width:2px,color:#000
-    style Lookup fill:#bbdefb,stroke:#1976d2,stroke-width:2px,color:#000
-    style Check fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
-    style NoAction fill:#e0e0e0,stroke:#616161,stroke-width:2px,color:#000
-    style Download fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000
-    style Poll fill:#1976d2,stroke:#0d47a1,stroke-width:2px,color:#fff
-    style Found fill:#f9a825,stroke:#f57f17,stroke-width:2px,color:#000
-    style Delete fill:#ff7043,stroke:#d84315,stroke-width:2px,color:#fff
-    style Send fill:#7b1fa2,stroke:#4a148c,stroke-width:2px,color:#fff
-    style OS fill:#7b1fa2,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Start fill:#a5d6a7,stroke:#2e7d32,stroke-width:3px
+    style Done fill:#a5d6a7,stroke:#2e7d32,stroke-width:3px
+    style Detect fill:#90caf9,stroke:#1976d2,stroke-width:2px
+    style Store fill:#90caf9,stroke:#1976d2,stroke-width:2px
+    style Lookup fill:#90caf9,stroke:#1976d2,stroke-width:2px
+    style Wait fill:#e0e0e0,stroke:#616161,stroke-width:2px
+    style Switch fill:#fff59d,stroke:#f9a825,stroke-width:3px
+    style Check fill:#fff59d,stroke:#f57f17,stroke-width:2px
+    style NoAction fill:#e0e0e0,stroke:#757575,stroke-width:2px
+    style Download fill:#ffcc80,stroke:#e65100,stroke-width:2px
+    style Poll fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style Found fill:#ffd54f,stroke:#f57f17,stroke-width:2px
+    style Delete fill:#e64a19,stroke:#bf360c,stroke-width:2px,color:#fff
+    style Send fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
+    style OS fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
 ```
 
 ### Operating Modes
