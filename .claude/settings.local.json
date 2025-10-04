@@ -5,7 +5,11 @@
       "Bash(findstr:*)",
       "Read(//c/Users/YonatanSetbon/Downloads/**)",
       "Bash(dir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: AutoLang - Smart Hebrew/English Keyboard Switcher\n\n🎯 Features:\n- Per-tab language memory with automatic keyboard switching\n- AutoHotkey integration for OS-level Alt+Shift triggering\n- Per-field mode for granular language tracking\n- WhatsApp Web per-contact language memory\n- Visual language detection indicators\n- Extensive logging and debugging support\n\n🛠️ Technical Implementation:\n- Chrome Extension (Manifest V3)\n- Background service worker for tab management\n- Content script with language detection\n- AutoHotkey watcher polling Downloads folder\n- Safe Chrome API wrappers to handle context invalidation\n\n📝 Components:\n- background.js: Service worker managing tab languages\n- content.js: Language detection and field tracking\n- AutoLangWatcher.ahk: Windows keyboard switching helper\n- popup.js/html: Extension UI for manual language selection\n\n🔧 Configuration:\n- Adjustable polling intervals (200ms default)\n- Configurable keyboard shortcuts\n- Toggle between simple per-tab and per-field modes\n- Optional badge display\n\n🐛 Known Issues:\n- Chrome download security may intermittently block trigger files\n- Tab language state cleared on browser restart (by design)\n- Windows-only (AutoHotkey dependency)\n\n🙏 Built with ❤️ for bilingual users tired of manual keyboard switching!\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []

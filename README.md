@@ -13,6 +13,44 @@ A Chrome extension that automatically remembers and switches between Hebrew and 
 
 ## 🚀 How It Works
 
+### Visual Workflow
+
+```mermaid
+flowchart TD
+    Start([User Types in Browser Tab]) --> Detect[Content Script Detects Language<br/>Hebrew/English Characters]
+    Detect --> Store[Background Script Stores<br/>Tab → Language Mapping]
+    Store --> Wait[Extension Waits...]
+
+    Wait --> Switch([User Switches to Different Tab])
+    Switch --> Lookup[Background Script Looks Up<br/>Language for New Tab]
+    Lookup --> Check{Language Different<br/>from Current?}
+
+    Check -->|No| NoAction[No Action Needed]
+    Check -->|Yes| Download[Create Trigger File<br/>in Downloads Folder]
+
+    Download --> Poll[AutoHotkey Script<br/>Polling Every 200ms]
+    Poll --> Found{Trigger File<br/>Detected?}
+
+    Found -->|Yes| Delete[Delete Trigger File]
+    Delete --> Send[Send Alt+Shift<br/>to Windows]
+    Send --> OS[Windows Switches<br/>Keyboard Layout]
+    OS --> Done([User Can Type in<br/>Correct Language])
+
+    Found -->|No| Poll
+
+    style Start fill:#e1f5e1
+    style Done fill:#e1f5e1
+    style Detect fill:#e3f2fd
+    style Store fill:#e3f2fd
+    style Lookup fill:#e3f2fd
+    style Download fill:#fff3e0
+    style Poll fill:#fce4ec
+    style Send fill:#f3e5f5
+    style OS fill:#f3e5f5
+```
+
+### Operating Modes
+
 AutoLang operates in two modes:
 
 ### 1. Simple Per-Tab Mode (Default)
@@ -47,11 +85,21 @@ AutoLang operates in two modes:
    - Click "Load unpacked"
    - Select the AutoLang folder
 
-3. **Start the AutoHotkey watcher**
-   - Double-click AutoLangWatcher.ahk to run it
-   - The script will run in the background (check system tray)
+3. **Start the AutoHotkey watcher** (REQUIRED!)
+   - Double-click `AutoLangWatcher.ahk` to run it
+   - The script will run in the background (check system tray for AutoHotkey icon)
+   - **⚠️ IMPORTANT**: The extension will NOT switch keyboards without this running!
 
-4. **Configure Chrome downloads** (Important!)
+4. **Add AutoHotkey to Windows Startup** (Highly Recommended!)
+   - **Option A - Automatic**:
+     - Right-click `install_startup.bat` → "Run as administrator"
+     - This ensures AutoLangWatcher runs automatically on every boot
+   - **Option B - Manual**:
+     - Press `Win+R`, type `shell:startup`, press Enter
+     - Create a shortcut to `AutoLangWatcher.ahk` in that folder
+   - **To verify**: Restart Windows and check system tray for AutoHotkey icon
+
+5. **Configure Chrome downloads** (Important!)
    - Go to chrome://settings/downloads
    - Disable "Ask where to save each file before downloading"
    - This allows the extension to create trigger files automatically
@@ -93,9 +141,99 @@ AutoLang operates in two modes:
    - Polls every 200ms for fast response
    - Logs activity to AutoLangWatcher.log
 
-### Communication Flow
+### How AutoLang Works - Visual Workflow
 
-Tab Switch → background.js → Downloads trigger file → AutoHotkey → Alt+Shift → OS
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        USER TYPES IN TAB 1                          │
+│                     (types Hebrew characters)                        │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+                    ┌────────────────────────┐
+                    │    content.js          │
+                    │  (Content Script)      │
+                    │                        │
+                    │ • Detects Hebrew chars │
+                    │ • Updates currentLang  │
+                    └───────────┬────────────┘
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │   background.js        │
+                    │  (Service Worker)      │
+                    │                        │
+                    │ • Stores: Tab1=Hebrew  │
+                    │ • Updates badge: עב    │
+                    └────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    USER SWITCHES TO TAB 2                           │
+│                  (tab previously used English)                       │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+                    ┌────────────────────────┐
+                    │   background.js        │
+                    │                        │
+                    │ • Detects tab switch   │
+                    │ • Looks up: Tab2=Eng   │
+                    │ • Needs to switch KB!  │
+                    └───────────┬────────────┘
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │  Download Trigger      │
+                    │                        │
+                    │ Creates file in        │
+                    │ Downloads folder:      │
+                    │ "autolang_switch_      │
+                    │  to_english.txt"       │
+                    └───────────┬────────────┘
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │ AutoLangWatcher.ahk    │
+                    │  (Background Process)  │
+                    │                        │
+                    │ • Polls every 200ms    │
+                    │ • Detects trigger file │
+                    │ • Deletes file         │
+                    └───────────┬────────────┘
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │   Send Alt+Shift       │
+                    │                        │
+                    │ • AHK sends keystroke  │
+                    │ • Windows switches KB  │
+                    │ • English → Hebrew     │
+                    └───────────┬────────────┘
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │  Keyboard Switched!    │
+                    │                        │
+                    │  User can now type in  │
+                    │  English in Tab 2      │
+                    └────────────────────────┘
+```
+
+### Simplified Flow Diagram
+
+```
+[User Types] → [Detect Language] → [Remember Tab Language]
+                                            ↓
+[User Switches Tab] → [Lookup Tab Language] → [Need Switch?]
+                                                      ↓
+                                              [Download Trigger]
+                                                      ↓
+                                             [AutoHotkey Detects]
+                                                      ↓
+                                              [Send Alt+Shift]
+                                                      ↓
+                                            [Windows Switches KB]
+```
 
 ## 📝 Configuration
 
