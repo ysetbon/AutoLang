@@ -32,8 +32,8 @@ flowchart TD
     Poll --> Found{Trigger File<br/>Detected?}
 
     Found -->|Yes| Delete[Delete Trigger File]
-    Delete --> Send[Send Alt+Shift<br/>to Windows]
-    Send --> OS[Windows Switches<br/>Keyboard Layout]
+    Delete --> Send[Call Windows API:<br/>ActivateKeyboardLayout]
+    Send --> OS[Directly Switch to<br/>Hebrew/English Layout]
     OS --> Done([User Can Type in<br/>Correct Language])
 
     Found -->|No| Poll
@@ -63,7 +63,7 @@ AutoLang operates in two modes:
 - Detects which language you're typing in each tab
 - Remembers your language preference per tab
 - Automatically switches keyboard layout when you switch tabs
-- Uses AutoHotkey (Windows) to trigger Alt+Shift for OS-level switching
+- Uses AutoHotkey (Windows) to directly activate specific keyboard layouts (Hebrew 0x040D, English 0x0409)
 
 ### 2. Per-Field Mode
 - Tracks language preference for each individual input field
@@ -142,10 +142,11 @@ AutoLang operates in two modes:
    - Guards against extension context invalidation
 
 3. **AutoLangWatcher.ahk** (Windows Helper)
-   - Monitors Downloads folder for trigger files
-   - Sends Alt+Shift to OS when trigger detected
+   - Monitors Downloads folder for trigger files (`.trigger` extension)
+   - Directly activates specific keyboard layouts via Windows API
+   - Uses `ActivateKeyboardLayout()` and `LoadKeyboardLayout()` for reliable switching
    - Polls every 200ms for fast response
-   - Logs activity to AutoLangWatcher.log
+   - Logs activity to AutoLangWatcher.log in Downloads folder
 
 ### How AutoLang Works - Visual Workflow
 
@@ -194,7 +195,7 @@ AutoLang operates in two modes:
                     │ Creates file in        │
                     │ Downloads folder:      │
                     │ "autolang_switch_      │
-                    │  to_english.txt"       │
+                    │  to_english.trigger"   │
                     └───────────┬────────────┘
                                 │
                                 ▼
@@ -209,11 +210,12 @@ AutoLang operates in two modes:
                                 │
                                 ▼
                     ┌────────────────────────┐
-                    │   Send Alt+Shift       │
+                    │   Windows API Call     │
                     │                        │
-                    │ • AHK sends keystroke  │
-                    │ • Windows switches KB  │
-                    │ • English → Hebrew     │
+                    │ • ActivateKeyboard     │
+                    │   Layout(0x0409)       │
+                    │ • Directly activates   │
+                    │   English layout       │
                     └───────────┬────────────┘
                                 │
                                 ▼
@@ -232,29 +234,37 @@ AutoLang operates in two modes:
                                             ↓
 [User Switches Tab] → [Lookup Tab Language] → [Need Switch?]
                                                       ↓
-                                              [Download Trigger]
+                                              [Download .trigger File]
                                                       ↓
                                              [AutoHotkey Detects]
                                                       ↓
-                                              [Send Alt+Shift]
+                                              [Call Windows API]
                                                       ↓
-                                            [Windows Switches KB]
+                                      [ActivateKeyboardLayout(0x040D/0x0409)]
 ```
 
 ## 📝 Configuration
 
-### Change Keyboard Shortcut
+### Change Target Keyboard Layouts
 
-Edit AutoLangWatcher.ahk line 41 and 56:
+Edit AutoLangWatcher.ahk lines 46 and 57 to change the language IDs:
 ```autohotkey
-Send, !+  ; Change this to your preferred shortcut
+SwitchToLayout(0x040D)  ; Hebrew - change to your language ID
+SwitchToLayout(0x0409)  ; English (US) - change to your language ID
 ```
+
+Common language IDs:
+- `0x0409` - English (US)
+- `0x0809` - English (UK)
+- `0x040D` - Hebrew
+- `0x0419` - Russian
+- `0x040C` - French
 
 ### Adjust Polling Interval
 
-Edit AutoLangWatcher.ahk line 27:
+Edit AutoLangWatcher.ahk line 23:
 ```autohotkey
-SetTimer, WatchDownloads, 200  ; Change 200 to desired milliseconds
+SetTimer, PollChromeStorage, 200  ; Change 200 to desired milliseconds
 ```
 
 ### Enable/Disable Badge
@@ -288,9 +298,11 @@ const SIMPLE_PER_TAB_MODE = false;  // Set to false for per-field tracking
 
 ### Downloads failing with FILE_SECURITY_CHECK_FAILED?
 
-- This is a known Chrome security issue with some configurations
-- Check your antivirus/security software
-- Try disabling Chrome's "Safe Browsing" temporarily for testing
+- **This should be fixed in the current version** (uses text/plain with simple encoding)
+- If still occurring:
+  - Check your antivirus/security software settings
+  - Verify Downloads folder permissions
+  - Check Chrome downloads settings (chrome://settings/downloads)
 
 ## 📊 Language Detection
 
@@ -298,6 +310,42 @@ const SIMPLE_PER_TAB_MODE = false;  // Set to false for per-field tracking
 - **English**: Pattern [a-zA-Z]
 - **Mixed text**: Majority language wins
 - **Single character**: Immediate detection
+
+## 🔧 Technical Implementation Details
+
+### Communication Method: File-Based Triggers
+
+The extension uses a **file-based inter-process communication** approach:
+
+1. **Chrome Extension → AutoHotkey**:
+   - Extension creates small `.trigger` files in Downloads folder
+   - Uses Chrome Downloads API with `data:text/plain` URLs
+   - File names: `autolang_switch_to_hebrew.trigger` / `autolang_switch_to_english.trigger`
+
+2. **AutoHotkey Detection**:
+   - Polls Downloads folder every 200ms using `FileExist()`
+   - Immediately deletes trigger file when detected
+   - Calls Windows API to switch keyboard
+
+3. **Keyboard Switching via Windows API**:
+   - Uses `ActivateKeyboardLayout(HKL)` to directly activate specific layouts
+   - Calls `LoadKeyboardLayout()` with `KLF_ACTIVATE` flag as backup
+   - Also sends `WM_INPUTLANGCHANGEREQUEST` message to active window
+   - More reliable than simulating Alt+Shift keypresses
+
+### Why This Approach?
+
+**Alternatives considered:**
+- ❌ **Native Messaging**: Requires complex registry setup, harder for users
+- ❌ **Localhost HTTP Server**: Requires additional dependencies (Node.js)
+- ❌ **Chrome Storage Polling**: No easy way for AutoHotkey to read LevelDB
+- ✅ **File-based triggers**: Simple, cross-platform concept, no dependencies
+
+**Benefits:**
+- No admin rights required
+- Works with portable Chrome installations
+- Easy to debug (visible files, log files)
+- Fast response time (~200ms average)
 
 ## 🔒 Privacy
 

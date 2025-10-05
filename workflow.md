@@ -17,9 +17,9 @@ flowchart TD
     Poll --> Found{Trigger File<br/>Detected?}
     
     Found -->|Yes| Delete[Delete Trigger File]
-    Delete --> Send[Send Alt+Shift<br/>to Windows]
-    Send --> OS[Windows Switches<br/>Keyboard Layout]
-    OS --> Done([User Can Type in<br/>Correct Language])
+    Delete --> API[Call Windows API:<br/>ActivateKeyboardLayout]
+    API --> Switch[Directly Activate<br/>Hebrew 0x040D / English 0x0409]
+    Switch --> Done([User Can Type in<br/>Correct Language])
     
     Found -->|No| Poll
     
@@ -36,13 +36,29 @@ flowchart TD
     style Poll fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style Found fill:#ffd54f,stroke:#f57f17,stroke-width:2px
     style Delete fill:#e64a19,stroke:#bf360c,stroke-width:2px,color:#fff
-    style Send fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
-    style OS fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
+    style API fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
+    style Switch fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#fff
 ```
 
 ## Component Roles
 
-- **Content Script (content.js)**: Detects typed language
-- **Background Script (background.js)**: Manages tab languages & triggers switches
-- **AutoHotkey Script**: Monitors Downloads folder & sends keyboard shortcuts
-- **Windows OS**: Executes keyboard layout switch
+- **Content Script (content.js)**: Detects typed language from Hebrew/English characters
+- **Background Script (background.js)**: Manages tab-to-language mapping & creates trigger files
+- **AutoHotkey Script (AutoLangWatcher.ahk)**: Polls Downloads folder & calls Windows API
+- **Windows API**: `ActivateKeyboardLayout()` directly switches to specific language layout (0x040D for Hebrew, 0x0409 for English)
+
+## Technical Details
+
+### Trigger File Format
+- **Filename**: `autolang_switch_to_hebrew.trigger` or `autolang_switch_to_english.trigger`
+- **Content**: Simple text with language name
+- **Location**: User's Downloads folder
+- **Lifecycle**: Created by Chrome → Detected by AutoHotkey → Immediately deleted
+
+### Keyboard Switching Method
+AutoHotkey uses three methods for maximum compatibility:
+1. `ActivateKeyboardLayout(HKL, 0)` - Activates layout for current thread
+2. `PostMessage(WM_INPUTLANGCHANGEREQUEST)` - Sends message to active window
+3. `LoadKeyboardLayout(layoutStr, KLF_ACTIVATE)` - Loads and activates layout
+
+This ensures reliable switching across different Windows versions and configurations.

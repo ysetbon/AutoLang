@@ -101,21 +101,25 @@ GetDownloadsPath() {
 ; Helper: Switch to specific keyboard layout by language ID
 ; layoutID: 0x0409 = English (US), 0x040D = Hebrew, etc.
 SwitchToLayout(layoutID) {
-    ; Get handle to foreground window
-    WinGet, activeHwnd, ID, A
+    ; Build HKL (Handle to Keyboard Layout) in format: 0xLLLLLLLL where LLLL = language ID
+    ; English: 0x04090409, Hebrew: 0x040D040D
+    HKL := (layoutID << 16) | layoutID
 
-    ; Get thread ID of active window
-    threadID := DllCall("GetWindowThreadProcessId", "UInt", activeHwnd, "UInt", 0)
+    ; Get foreground window
+    WinGet, hWnd, ID, A
 
-    ; Load the keyboard layout for the language
-    ; Format: 0x04090409 for English, 0x040D040D for Hebrew
-    fullLayoutID := (layoutID << 16) | layoutID
+    ; Method 1: Try ActivateKeyboardLayout for current thread
+    threadID := DllCall("GetWindowThreadProcessId", "Ptr", hWnd, "Ptr", 0, "UInt")
+    DllCall("ActivateKeyboardLayout", "Ptr", HKL, "UInt", 0)
 
-    ; Send WM_INPUTLANGCHANGEREQUEST message to switch layout
-    ; WM_INPUTLANGCHANGEREQUEST = 0x50
-    PostMessage, 0x50, 0, %fullLayoutID%, , ahk_id %activeHwnd%
+    ; Method 2: Also send WM_INPUTLANGCHANGEREQUEST to the active window
+    PostMessage, 0x50, 0, %HKL%, , ahk_id %hWnd%
 
-    ; Small delay to ensure switch completes
+    ; Method 3: Backup - use LoadKeyboardLayout + ActivateKeyboardLayout
+    ; This ensures the layout is loaded even if not installed
+    layoutStr := Format("{:08X}", HKL)
+    DllCall("LoadKeyboardLayout", "Str", layoutStr, "UInt", 0x00000001)  ; KLF_ACTIVATE
+
     Sleep, 10
 }
 
