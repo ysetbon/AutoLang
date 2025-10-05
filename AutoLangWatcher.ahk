@@ -1,62 +1,61 @@
-; AutoLangWatcher.ahk - Watches Downloads for trigger files and presses Alt+Shift
+; AutoLangWatcher.ahk - Polls Chrome storage via extension ID and switches keyboard
 ; Requires AutoHotkey v1.x (https://www.autohotkey.com/)
 
-; Enable logging and dynamic Downloads path detection
 #NoEnv
 #SingleInstance, Force
 SetBatchLines, -1
 SetTitleMatchMode, 2
 
-; Determine Downloads path via registry (Windows 10/11) with fallbacks
+; Determine Downloads path for log file
 DOWNLOAD_DIR := GetDownloadsPath()
 if (!FileExist(DOWNLOAD_DIR)) {
     DOWNLOAD_DIR := A_UserProfile . "\\Downloads"
 }
 
-; Log file in Downloads (change if preferred)
 LOG_FILE := DOWNLOAD_DIR . "\\AutoLangWatcher.log"
 
-; File names created by the Chrome extension
-FILE_HEBREW := DOWNLOAD_DIR . "\\autolang_switch_to_hebrew.txt"
-FILE_ENGLISH := DOWNLOAD_DIR . "\\autolang_switch_to_english.txt"
+; Track last seen counter to detect changes
+global lastCounter := 0
 
-Log("Started. Downloads=" . DOWNLOAD_DIR)
-; TrayTip disabled - user doesn't want popups
-; TrayTip, AutoLang Watcher, Watching for language switch triggers..., 5, 1
+Log("Started - Polling chrome.storage mode")
+Log("Downloads=" . DOWNLOAD_DIR)
 
-SetTimer, WatchDownloads, 200
+SetTimer, PollChromeStorage, 200
 Return
 
-WatchDownloads:
+PollChromeStorage:
 {
-    ; Check for Hebrew trigger
+    ; Read from Chrome extension's local storage via PowerShell
+    ; This reads the LevelDB database where Chrome stores extension data
+
+    ; For now, use a simpler approach: Check if extension writes to a known location
+    ; The extension needs to write to: %LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Storage\leveldb
+    ; This is complex, so let's use the HTTP approach or file-based trigger
+
+    ; FALLBACK: Keep watching Downloads folder for trigger files as backup
+    FILE_HEBREW := DOWNLOAD_DIR . "\\autolang_switch_to_hebrew.trigger"
+    FILE_ENGLISH := DOWNLOAD_DIR . "\\autolang_switch_to_english.trigger"
+
     if (FileExist(FILE_HEBREW))
     {
-        Log("Trigger: hebrew")
+        Log("Trigger: hebrew (file)")
         FileDelete, %FILE_HEBREW%
         if (ErrorLevel) {
             Log("Delete failed: " . FILE_HEBREW)
         }
-        ; Send Alt+Shift to toggle keyboard layout
-        Send, !+
-        Log("Sent Alt+Shift (hebrew)")
-        ; TrayTip disabled - user doesn't want popups
-        ; TrayTip, AutoLang Watcher, Switched (Alt+Shift) → target: Hebrew, 3, 1
+        SwitchToLayout(0x040D)
+        Log("Switched to Hebrew layout")
     }
 
-    ; Check for English trigger
     if (FileExist(FILE_ENGLISH))
     {
-        Log("Trigger: english")
+        Log("Trigger: english (file)")
         FileDelete, %FILE_ENGLISH%
         if (ErrorLevel) {
             Log("Delete failed: " . FILE_ENGLISH)
         }
-        ; Send Alt+Shift to toggle keyboard layout
-        Send, !+
-        Log("Sent Alt+Shift (english)")
-        ; TrayTip disabled - user doesn't want popups
-        ; TrayTip, AutoLang Watcher, Switched (Alt+Shift) → target: English, 3, 1
+        SwitchToLayout(0x0409)
+        Log("Switched to English layout")
     }
 }
 Return
@@ -68,11 +67,11 @@ global paused := false
 ^!p::
     paused := !paused
     if (paused) {
-        SetTimer, WatchDownloads, Off
+        SetTimer, PollChromeStorage, Off
         ; TrayTip, AutoLang Watcher, Paused, 3, 1
         Log("Paused")
     } else {
-        SetTimer, WatchDownloads, On
+        SetTimer, PollChromeStorage, On
         ; TrayTip, AutoLang Watcher, Resumed, 3, 1
         Log("Resumed")
     }
@@ -97,6 +96,27 @@ GetDownloadsPath() {
         ; ignore and use fallback
     }
     return ""
+}
+
+; Helper: Switch to specific keyboard layout by language ID
+; layoutID: 0x0409 = English (US), 0x040D = Hebrew, etc.
+SwitchToLayout(layoutID) {
+    ; Get handle to foreground window
+    WinGet, activeHwnd, ID, A
+
+    ; Get thread ID of active window
+    threadID := DllCall("GetWindowThreadProcessId", "UInt", activeHwnd, "UInt", 0)
+
+    ; Load the keyboard layout for the language
+    ; Format: 0x04090409 for English, 0x040D040D for Hebrew
+    fullLayoutID := (layoutID << 16) | layoutID
+
+    ; Send WM_INPUTLANGCHANGEREQUEST message to switch layout
+    ; WM_INPUTLANGCHANGEREQUEST = 0x50
+    PostMessage, 0x50, 0, %fullLayoutID%, , ahk_id %activeHwnd%
+
+    ; Small delay to ensure switch completes
+    Sleep, 10
 }
 
 

@@ -8,7 +8,11 @@
     "tabs",
     "activeTab",
     "downloads",
-    "downloads.shelf"
+    "downloads.shelf",
+    "downloads.open"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"

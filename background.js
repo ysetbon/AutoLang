@@ -215,26 +215,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true; // Keep message channel open for async response
 });
 
-// Trigger keyboard switch by creating a data URL that AutoHotkey will detect
-function triggerKeyboardSwitch(language, reason) {
+// Trigger keyboard switch - simplified to just use Downloads API
+// Chrome security is blocking, so we'll try a minimal approach
+function triggerKeyboardSwitch(language, reason, retryCount = 0) {
   console.log('╔════════════════════════════════════════════════╗');
   console.log('║ [AutoLang] TRIGGERING KEYBOARD SWITCH         ║');
   console.log('╠════════════════════════════════════════════════╣');
   console.log('║ Target Language:', language.padEnd(32), '║');
   console.log('║ Reason:', reason.padEnd(39), '║');
-  console.log('║ Time:', new Date().toLocaleTimeString().padEnd(40), '║');
-  
-  const filename = language === 'hebrew' 
-    ? 'autolang_switch_to_hebrew.txt' 
-    : 'autolang_switch_to_english.txt';
-  
-  console.log('║ Creating trigger file:', filename.padEnd(27), '║');
 
-  const content = `AutoLang Switch: ${language}\nTime: ${new Date().toISOString()}\nReason: ${reason}`;
+  const filename = language === 'hebrew'
+    ? 'autolang_switch_to_hebrew.trigger'
+    : 'autolang_switch_to_english.trigger';
 
-  // Convert content to base64 data URL
-  const base64Content = btoa(unescape(encodeURIComponent(content)));
-  const dataUrl = `data:text/plain;base64,${base64Content}`;
+  // Super simple text content
+  const content = language;
+
+  // Try text/plain with simple base64
+  const dataUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(content)}`;
 
   chrome.downloads.download({
     url: dataUrl,
@@ -242,52 +240,13 @@ function triggerKeyboardSwitch(language, reason) {
     saveAs: false,
     conflictAction: 'overwrite'
   }, (downloadId) => {
-    if (chrome.runtime.lastError || typeof downloadId !== 'number') {
-      console.log('║ ✗ Download failed via dataURL                ║');
-      if (chrome.runtime.lastError) {
-        console.log('║ Error:', chrome.runtime.lastError.message.padEnd(36), '║');
-      }
+    if (chrome.runtime.lastError) {
+      console.log('║ ✗ Download blocked by Chrome security        ║');
+      console.log('║', chrome.runtime.lastError.message.substring(0, 44).padEnd(44), '║');
       console.log('╚════════════════════════════════════════════════╝');
-    } else {
-      console.log('║ ✓ Download started                           ║');
-      console.log('║ Download ID:', String(downloadId).padEnd(34), '║');
-      console.log('║                                               ║');
-      console.log('║ → Waiting for download to complete...        ║');
-
-      // Wait for download to complete before cleaning up
-      const checkDownloadComplete = () => {
-        chrome.downloads.search({ id: downloadId }, (results) => {
-          if (results && results.length > 0) {
-            const download = results[0];
-            if (download.state === 'complete') {
-              console.log('║ ✓ Download complete                          ║');
-              console.log('║ → AutoHotkey should now detect file          ║');
-              console.log('╚════════════════════════════════════════════╝');
-
-              // Wait a bit for AutoHotkey to detect the file, then clean up
-              setTimeout(() => {
-                chrome.downloads.removeFile(downloadId, () => {
-                  if (chrome.runtime.lastError) {
-                    console.log('[AutoLang] Note: Could not remove file (may already be deleted by AHK)');
-                  }
-                });
-                chrome.downloads.erase({ id: downloadId }, () => {
-                  console.log('[AutoLang] ✓ Download cleaned from history');
-                });
-              }, 3000); // Wait 3 seconds for AHK to detect (increased from 1s)
-            } else if (download.state === 'interrupted') {
-              console.log('║ ✗ Download interrupted                       ║');
-              console.log('║ Error:', (download.error || 'unknown').padEnd(37), '║');
-              console.log('╚════════════════════════════════════════════╝');
-            } else {
-              // Still in progress, check again
-              setTimeout(checkDownloadComplete, 100);
-            }
-          }
-        });
-      };
-
-      checkDownloadComplete();
+    } else if (downloadId) {
+      console.log('║ ✓ Download initiated (ID:', String(downloadId).padEnd(23), ')║');
+      console.log('╚════════════════════════════════════════════════╝');
     }
   });
 }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AutoLang Bridge</title>
+</head>
+<body>
+    <div id="language">english</div>
+    <div id="timestamp">0</div>
+    <script>
+        // Poll chrome.storage and update the page
+        function updateLanguage() {
+            chrome.storage.local.get(['autolang_switch_request'], (result) => {
+                if (result.autolang_switch_request) {
+                    document.getElementById('language').textContent = result.autolang_switch_request.language;
+                    document.getElementById('timestamp').textContent = result.autolang_switch_request.counter;
+                }
+            });
+        }
+
+        // Update every 100ms
+        setInterval(updateLanguage, 100);
+        updateLanguage();
+    </script>
+</body>
+</html>
